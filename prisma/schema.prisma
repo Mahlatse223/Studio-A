@@ -1,0 +1,76 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  password         String
+  role             Role      // Enum for roles
+  apartmentNumber  String?   // For residents (optional)
+  createdTickets   Ticket[]  @relation("CreatedTickets")
+  assignedTickets  Ticket[]  @relation("AssignedTickets")
+  comments         Comment[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Ticket {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  category    Category   // Enum for categories
+  priority    Priority   // Enum for priorities
+  status      Status     // Enum for statuses
+  resident    User       @relation("CreatedTickets", fields: [residentId], references: [id])
+  residentId  Int
+  assignedTo  User?      @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  assignedToId Int?
+  comments    Comment[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  message   String
+  ticket    Ticket    @relation(fields: [ticketId], references: [id])
+  ticketId  Int
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  Int
+  createdAt DateTime  @default(now())
+}
+
+enum Role {
+  RESIDENT
+  MANAGER
+  STAFF
+}
+
+enum Category {
+  COMPLAINT
+  CRIME
+  MAINTENANCE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
